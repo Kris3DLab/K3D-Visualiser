@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>K3D Visualiser</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,100;0,300;0,400;0,700;1,300&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #050810;
+      --bg2: #080d1a;
+      --panel: #0d1525;
+      --border: #1a2a4a;
+      --accent: #00e5ff;
+      --accent2: #7b2fff;
+      --accent3: #ff3d6b;
+      --text: #c8d8f0;
+      --text-dim: #5a7090;
+      --glow: 0 0 20px rgba(0,229,255,0.3);
+      --glow2: 0 0 30px rgba(123,47,255,0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Exo 2', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+    }
+
+    /* GRID BACKGROUND */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* SCANLINES */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 60px;
+      height: 72px;
+      background: rgba(5,8,16,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #fff;
+    }
+    .nav-logo span { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      gap: 40px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.85rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    .nav-cta {
+      background: transparent;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 10px 28px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    }
+    .nav-cta:hover {
+      background: var(--accent);
+      color: var(--bg);
+      box-shadow: var(--glow);
+    }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 120px 60px 80px;
+      z-index: 1;
+    }
+
+    .hero-orb {
+      position: absolute;
+      top: 50%;
+      right: 8%;
+      transform: translateY(-50%);
+      width: 480px;
+      height: 480px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%,
+        rgba(123,47,255,0.6) 0%,
+        rgba(0,229,255,0.3) 40%,
+        transparent 70%);
+      filter: blur(2px);
+      animation: orbPulse 6s ease-in-out infinite;
+    }
+
+    .hero-orb::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,229,255,0.2);
+      animation: orbRotate 20s linear infinite;
+    }
+
+    .hero-orb::after {
+      content: '';
+      position: absolute;
+      inset: 30px;
+      border-radius: 50%;
+      border: 1px dashed rgba(123,47,255,0.3);
+      animation: orbRotate 12s linear infinite reverse;
+    }
+
+    /* 3D wireframe cube inside orb */
+    .cube-wrap {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cube {
+      width: 160px;
+      height: 160px;
+      position: relative;
+      transform-style: preserve-3d;
+      animation: cubeRotate 14s linear infinite;
+    }
+
+    .cube-face {
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      border: 1.5px solid rgba(0,229,255,0.5);
+      background: rgba(0,229,255,0.03);
+    }
+
+    .cube-face.front  { transform: translateZ(80px); }
+    .cube-face.back   { transform: rotateY(180deg) translateZ(80px); }
+    .cube-face.left   { transform: rotateY(-90deg) translateZ(80px); }
+    .cube-face.right  { transform: rotateY(90deg) translateZ(80px); }
+    .cube-face.top    { transform: rotateX(90deg) translateZ(80px); }
+    .cube-face.bottom { transform: rotateX(-90deg) translateZ(80px); }
+
+    @keyframes cubeRotate {
+      from { transform: rotateX(20deg) rotateY(0deg); }
+      to   { transform: rotateX(20deg) rotateY(360deg); }
+    }
+
+    @keyframes orbPulse {
+      0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.9; }
+      50%       { transform: translateY(-50%) scale(1.04); opacity: 1; }
+    }
+
+    @keyframes orbRotate {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .hero-content { max-width: 620px; position: relative; z-index: 2; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,229,255,0.06);
+      border: 1px solid rgba(0,229,255,0.2);
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 32px;
+      clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+    }
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.4s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(3rem, 5vw, 5.5rem);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.01em;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    h1 .k { color: var(--accent); }
+    h1 .sub {
+      display: block;
+      font-size: 0.55em;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .hero-desc {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text-dim);
+      margin: 28px 0 44px;
+      max-width: 480px;
+    }
+
+    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #fff;
+      border: none;
+      padding: 16px 40px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+      transition: all 0.3s;
+      box-shadow: 0 0 30px rgba(123,47,255,0.5);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 50px rgba(123,47,255,0.7);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 16px 40px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+      transition: all 0.3s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* STATS */
+    .stats {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 0;
+      padding: 0 60px;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .stat {
+      flex: 1;
+      padding: 40px 0;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .stat-num span { color: var(--accent); }
+    .stat-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-top: 8px;
+    }
+
+    /* FEATURES */
+    section { position: relative; z-index: 1; }
+
+    .features {
+      padding: 120px 60px;
+    }
+
+    .section-tag {
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 60px;
+      line-height: 1.1;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+    }
+
+    .feature-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 48px 40px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px;
+      height: 0;
+      background: linear-gradient(var(--accent2), var(--accent));
+      transition: height 0.4s ease;
+    }
+    .feature-card:hover::before { height: 100%; }
+    .feature-card:hover { border-color: rgba(0,229,255,0.2); }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      margin-bottom: 28px;
+      position: relative;
+    }
+    .feature-icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: var(--accent);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    .feature-num {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 4rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.04);
+      line-height: 1;
+    }
+
+    .feature-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .feature-text {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      color: var(--text-dim);
+    }
+
+    /* PRICING */
+    .pricing {
+      padding: 120px 60px;
+      background: var(--bg2);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 60px;
+    }
+
+    .price-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      padding: 48px 40px;
+      position: relative;
+      transition: all 0.3s;
+    }
+    .price-card.featured {
+      border-color: var(--accent2);
+      box-shadow: 0 0 60px rgba(123,47,255,0.2);
+    }
+    .price-card.featured::before {
+      content: 'LEGJOBB AJÁNLAT';
+      position: absolute;
+      top: -1px; left: 50%; transform: translateX(-50%);
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      color: #fff;
+      font-size: 0.65rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      padding: 5px 20px;
+    }
+
+    .price-tier {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 24px;
+    }
+    .price-card.featured .price-tier { color: var(--accent); }
+
+    .price-amount {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .price-amount sup {
+      font-size: 1.5rem;
+      vertical-align: super;
+      color: var(--text-dim);
+    }
+    .price-currency {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 32px;
+    }
+
+    .price-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 32px 0;
+    }
+
+    .price-features {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 40px;
+    }
+    .price-features li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.88rem;
+      color: var(--text-dim);
+    }
+    .price-features li::before {
+      content: '';
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--accent);
+      border-radius: 2px;
+      background: rgba(0,229,255,0.1);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .price-features li.active {
+      color: var(--text);
+    }
+    .price-features li.active::before {
+      background: var(--accent);
+      box-shadow: 0 0 10px rgba(0,229,255,0.4);
+    }
+
+    .btn-order {
+      width: 100%;
+      padding: 16px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-order:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .price-card.featured .btn-order {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      border: none;
+      color: #fff;
+      box-shadow: 0 0 30px rgba(123,47,255,0.4);
+    }
+    .price-card.featured .btn-order:hover {
+      box-shadow: 0 0 50px rgba(123,47,255,0.6);
+      transform: translateY(-2px);
+    }
+
+    /* ORDER FORM */
+    .order-section {
+      padding: 120px 60px;
+    }
+
+    .order-wrap {
+      max-width: 740px;
+      margin: 0 auto;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 48px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    input, select, textarea {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px 18px;
+      font-family: 'Exo 2', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 300;
+      outline: none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      width: 100%;
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(0,229,255,0.15);
+    }
+    select option { background: var(--panel); }
+    textarea { resize: vertical; min-height: 120px; }
+
+    .form-submit {
+      margin-top: 32px;
+      text-align: center;
+    }
+    .btn-submit {
+      background: linear-gradient(135deg, var(--accent2), var(--accent));
+      color: #fff;
+      border: none;
+      padding: 20px 80px;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
+      transition: all 0.3s;
+      box-shadow: 0 0 40px rgba(123,47,255,0.4);
+    }
+    .btn-submit:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 70px rgba(123,47,255,0.7);
+    }
+
+    /* SUCCESS MESSAGE */
+    .success-msg {
+      display: none;
+      text-align: center;
+      padding: 60px;
+      background: var(--panel);
+      border: 1px solid rgba(0,229,255,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .success-msg::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+    .success-icon {
+      font-size: 3rem;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+    .success-title {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 2rem;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .success-text { color: var(--text-dim); }
+
+    /* FOOTER */
+    footer {
+      position: relative;
+      z-index: 1;
+      padding: 60px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-logo {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .footer-logo span { color: var(--accent); }
+
+    .footer-copy {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    /* GITHUB BADGE */
+    .github-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-dim);
+      text-decoration: none;
+      font-size: 0.85rem;
+      border: 1px solid var(--border);
+      padding: 8px 20px;
+      transition: all 0.3s;
+    }
+    .github-link:hover { border-color: var(--accent); color: var(--accent); }
+    .github-link svg { width: 18px; height: 18px; }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .hero-badge  { animation: fadeUp 0.6s ease 0.1s both; }
+    h1           { animation: fadeUp 0.6s ease 0.2s both; }
+    .hero-desc   { animation: fadeUp 0.6s ease 0.35s both; }
+    .hero-actions{ animation: fadeUp 0.6s ease 0.5s both; }
+
+    /* MOBILE */
+    @media(max-width: 900px) {
+      nav { padding: 0 24px; }
+      .nav-links { display: none; }
+      .hero, .features, .pricing, .order-section, footer, .stats { padding-left: 24px; padding-right: 24px; }
+      .features-grid, .pricing-grid { grid-template-columns: 1fr; }
+      .hero-orb { width: 300px; height: 300px; right: -40px; opacity: 0.5; }
+      .form-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 24px; text-align: center; }
+      .stats { flex-direction: column; }
+      .stat { border-right: none; border-bottom: 1px solid var(--border); }
+      .stat:last-child { border-bottom: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo"><span>K3D</span> VISUALISER</div>
+    <ul class="nav-links">
+      <li><a href="#features">Funkciók</a></li>
+      <li><a href="#pricing">Árak</a></li>
+      <li><a href="#order">Rendelés</a></li>
+    </ul>
+    <button class="nav-cta" onclick="document.getElementById('order').scrollIntoView({behavior:'smooth'})">Megrendelem</button>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-orb">
+      <div class="cube-wrap">
+        <div class="cube">
+          <div class="cube-face front"></div>
+          <div class="cube-face back"></div>
+          <div class="cube-face left"></div>
+          <div class="cube-face right"></div>
+          <div class="cube-face top"></div>
+          <div class="cube-face bottom"></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge"><span class="badge-dot"></span> Legújabb generáció &mdash; v3.0</div>
+      <h1><span class="k">K3D</span> VISUALISER<span class="sub">3D Megjelenítő Rendszer</span></h1>
+      <p class="hero-desc">
+        Professzionális 3D vizualizációs megoldás, amely valós időben rendereli az összetett geometriákat. Ipari pontossággal, fogyasztói egyszerűséggel.
+      </p>
+      <div class="hero-actions">
+        <button class="btn-primary" onclick="document.getElementById('order').scrollIntoView({behavior:'smooth'})">Megrendelem most</button>
+        <button class="btn-ghost" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Tudj meg többet</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">120<span>fps</span></div>
+      <div class="stat-label">Valós idejű renderelés</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num"><span>∞</span> 4K</div>
+      <div class="stat-label">Felbontás támogatás</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">2<span>ms</span></div>
+      <div class="stat-label">Késleltetés</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">500<span>+</span></div>
+      <div class="stat-label">Elégedett ügyfél</div>
+    </div>
+  </div>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-tag">// Funkciók</div>
+    <div class="section-title">Miért válassza a K3D-t?</div>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <div class="feature-num">01</div>
+        <div class="feature-title">Valós idejű 3D</div>
+        <div class="feature-text">Hardver-gyorsított renderelés OpenGL és Vulkan backend támogatással. Millió poligon gond nélkül, akár 120 FPS-sel.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        </div>
+        <div class="feature-num">02</div>
+        <div class="feature-title">Adaptív Megvilágítás</div>
+        <div class="feature-text">PBR alapú megvilágítási rendszer HDRI környezeti térképpel, árnyékkövető algoritmussal és sugárkövetéssel.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        </div>
+        <div class="feature-num">03</div>
+        <div class="feature-title">Formátum Kompatibilitás</div>
+        <div class="feature-text">Natív támogatás STL, OBJ, GLTF, FBX, STEP és IGES formátumokhoz. Import/export egy kattintásra.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div class="feature-num">04</div>
+        <div class="feature-title">Analitika & Mérés</div>
+        <div class="feature-text">Beépített CAD mérőeszközök: távolság, szög, felszín, térfogat számítás precíziós móddal.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        </div>
+        <div class="feature-num">05</div>
+        <div class="feature-title">Biztonságos Munkakörnyezet</div>
+        <div class="feature-text">End-to-end titkosítás, lokális feldolgozás és opcionális felhőszinkron GDPR-kompatibilis módon.</div>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        </div>
+        <div class="feature-num">06</div>
+        <div class="feature-title">API & Integráció</div>
+        <div class="feature-text">REST API és WebSocket támogatás. Zökkenőmentes integráció CAD szoftverekkel, ERP rendszerekkel és webes platformokkal.</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="section-tag">// Árak</div>
+    <div class="section-title">Válasszon csomagot</div>
+
+    <div class="pricing-grid">
+
+      <div class="price-card">
+        <div class="price-tier">Starter</div>
+        <div class="price-amount"><sup>€</sup>299</div>
+        <div class="price-currency">egyszeri vásárlás &mdash; 1 licenc</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li class="active">Valós idejű 3D renderelés</li>
+          <li class="active">STL, OBJ, GLTF import</li>
+          <li class="active">Alapmérési eszközök</li>
+          <li class="active">Email support</li>
+          <li>Multi-user licenc</li>
+          <li>API hozzáférés</li>
+          <li>Prioritásos support</li>
+        </ul>
+        <button class="btn-order" onclick="selectPlan('Starter – €299')">Ezt választom</button>
+      </div>
+
+      <div class="price-card featured">
+        <div class="price-tier">Professional</div>
+        <div class="price-amount"><sup>€</sup>699</div>
+        <div class="price-currency">egyszeri vásárlás &mdash; 5 licenc</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li class="active">Valós idejű 3D renderelés</li>
+          <li class="active">Összes formátum támogatás</li>
+          <li class="active">Teljes mérőeszköz csomag</li>
+          <li class="active">Prioritásos email + chat</li>
+          <li class="active">Multi-user licenc (5)</li>
+          <li class="active">API hozzáférés</li>
+          <li>Dedikált support</li>
+        </ul>
+        <button class="btn-order" onclick="selectPlan('Professional – €699')">Ezt választom</button>
+      </div>
+
+      <div class="price-card">
+        <div class="price-tier">Enterprise</div>
+        <div class="price-amount">Egyedi</div>
+        <div class="price-currency">éves szerződés &mdash; korlátlan licenc</div>
+        <div class="price-divider"></div>
+        <ul class="price-features">
+          <li class="active">Valós idejű 3D renderelés</li>
+          <li class="active">Összes formátum támogatás</li>
+          <li class="active">Teljes mérőeszköz csomag</li>
+          <li class="active">24/7 dedikált support</li>
+          <li class="active">Korlátlan licenc</li>
+          <li class="active">Teljes API hozzáférés</li>
+          <li class="active">On-premise telepítés</li>
+        </ul>
+        <button class="btn-order" onclick="selectPlan('Enterprise – Egyedi árajánlat')">Ajánlatot kérek</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ORDER FORM -->
+  <section class="order-section" id="order">
+    <div class="order-wrap">
+      <div class="section-tag">// Rendelés</div>
+      <div class="section-title">Megrendelő Űrlap</div>
+
+      <div id="orderForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Vezetéknév *</label>
+            <input type="text" id="lastName" placeholder="Kovács" required />
+          </div>
+          <div class="form-group">
+            <label>Keresztnév *</label>
+            <input type="text" id="firstName" placeholder="János" required />
+          </div>
+          <div class="form-group full">
+            <label>Email cím *</label>
+            <input type="email" id="email" placeholder="kovacs.janos@ceg.hu" required />
+          </div>
+          <div class="form-group">
+            <label>Telefonszám</label>
+            <input type="tel" id="phone" placeholder="+36 30 123 4567" />
+          </div>
+          <div class="form-group">
+            <label>Cég neve</label>
+            <input type="text" id="company" placeholder="Példa Kft." />
+          </div>
+          <div class="form-group full">
+            <label>Választott csomag *</label>
+            <select id="plan">
+              <option value="">— Válasszon csomagot —</option>
+              <option value="Starter – €299">Starter – €299</option>
+              <option value="Professional – €699">Professional – €699</option>
+              <option value="Enterprise – Egyedi árajánlat">Enterprise – Egyedi árajánlat</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>Megjegyzés</label>
+            <textarea id="message" placeholder="Egyéb igény, kérdés, speciális konfiguráció..."></textarea>
+          </div>
+        </div>
+        <div class="form-submit">
+          <button class="btn-submit" onclick="submitOrder()">Megrendelés elküldése &#8594;</button>
+        </div>
+      </div>
+
+      <div class="success-msg" id="successMsg">
+        <div class="success-icon">✦</div>
+        <div class="success-title">Köszönjük a megrendelést!</div>
+        <p class="success-text">Munkatársaink hamarosan felveszik Önnel a kapcsolatot a megadott email-en.<br>Várható válaszidő: 1 munkanapon belül.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-logo"><span>K3D</span> VISUALISER</div>
+    <div class="footer-copy">© 2026 K3D Technologies &mdash; Minden jog fenntartva</div>
+    <a href="https://github.com" class="github-link" target="_blank">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      GitHub
+    </a>
+  </footer>
+
+  <script>
+    function selectPlan(plan) {
+      const select = document.getElementById('plan');
+      select.value = plan;
+      document.getElementById('order').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function submitOrder() {
+      const last  = document.getElementById('lastName').value.trim();
+      const first = document.getElementById('firstName').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const plan  = document.getElementById('plan').value;
+
+      if (!last || !first || !email || !plan) {
+        const empties = [];
+        if (!last)  empties.push('Vezetéknév');
+        if (!first) empties.push('Keresztnév');
+        if (!email) empties.push('Email cím');
+        if (!plan)  empties.push('Csomag');
+        alert('Kérem töltse ki a kötelező mezőket:\n' + empties.join(', '));
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Kérem adjon meg érvényes email-címet.');
+        return;
+      }
+
+      document.getElementById('orderForm').style.display = 'none';
+      const msg = document.getElementById('successMsg');
+      msg.style.display = 'block';
+      msg.scrollIntoView({ behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>
