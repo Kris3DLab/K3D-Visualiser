@@ -1,1019 +1,974 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>K3D Visualiser</title>
-  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:ital,wght@0,100;0,300;0,400;0,700;1,300&display=swap" rel="stylesheet"/>
-  <style>
-    :root {
-      --bg: #050810;
-      --bg2: #080d1a;
-      --panel: #0d1525;
-      --border: #1a2a4a;
-      --accent: #00e5ff;
-      --accent2: #7b2fff;
-      --accent3: #ff3d6b;
-      --text: #c8d8f0;
-      --text-dim: #5a7090;
-      --glow: 0 0 20px rgba(0,229,255,0.3);
-      --glow2: 0 0 30px rgba(123,47,255,0.4);
-    }
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>K3D Visualiser – DIY Kit</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:wght@200;300;400;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+:root{
+  --bg:#050810;--bg2:#080d1a;--panel:#0c1220;--panel2:#111827;
+  --border:#1a2a40;--border2:#243550;
+  --accent:#00e5ff;--accent2:#7c3aed;--accent3:#f43f5e;
+  --green:#10b981;--yellow:#f59e0b;
+  --text:#c8d8f0;--dim:#4a6080;--white:#ffffff;
+  --glow:0 0 24px rgba(0,229,255,.28);
+  --glow2:0 0 30px rgba(124,58,237,.4);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Exo 2',sans-serif;font-weight:300;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.025) 1px,transparent 1px);background-size:55px 55px;pointer-events:none;z-index:0;}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+/* ======= UTILS ======= */
+.hidden{display:none!important;}
+.z1{position:relative;z-index:1;}
 
-    html { scroll-behavior: smooth; }
+/* ======= VIEWS ======= */
+#view-site,#view-login,#view-admin{position:relative;}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Exo 2', sans-serif;
-      font-weight: 300;
-      overflow-x: hidden;
-    }
+/* ======= NAV ======= */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 56px;background:rgba(5,8,16,.9);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);}
+.nav-logo{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;letter-spacing:.14em;color:#fff;cursor:pointer;}
+.nav-logo span{color:var(--accent);}
+.nav-links{display:flex;gap:36px;list-style:none;}
+.nav-links a{color:var(--dim);text-decoration:none;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;transition:color .25s;}
+.nav-links a:hover{color:var(--accent);}
+.nav-right{display:flex;gap:12px;align-items:center;}
+.btn-nav{background:transparent;border:1px solid var(--border2);color:var(--dim);padding:9px 22px;font-family:'Rajdhani',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all .25s;clip-path:polygon(7px 0%,100% 0%,calc(100% - 7px) 100%,0% 100%);}
+.btn-nav:hover{border-color:var(--accent);color:var(--accent);}
+.btn-nav.primary{background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:#fff;box-shadow:var(--glow2);}
+.btn-nav.primary:hover{transform:translateY(-1px);box-shadow:0 0 40px rgba(124,58,237,.6);}
 
-    /* GRID BACKGROUND */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
-      background-size: 60px 60px;
-      pointer-events: none;
-      z-index: 0;
-    }
+/* ======= HERO ======= */
+.hero{min-height:100vh;display:flex;align-items:center;padding:110px 56px 80px;position:relative;z-index:1;}
+.hero-orb{position:absolute;top:50%;right:7%;transform:translateY(-50%);width:440px;height:440px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(124,58,237,.55),rgba(0,229,255,.25) 45%,transparent 70%);animation:orbPulse 7s ease-in-out infinite;}
+.hero-orb::before{content:'';position:absolute;inset:-2px;border-radius:50%;border:1px solid rgba(0,229,255,.18);animation:spin 22s linear infinite;}
+.hero-orb::after{content:'';position:absolute;inset:28px;border-radius:50%;border:1px dashed rgba(124,58,237,.25);animation:spin 13s linear infinite reverse;}
+@keyframes orbPulse{0%,100%{transform:translateY(-50%) scale(1);}50%{transform:translateY(-50%) scale(1.03);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.cube-host{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;perspective:600px;}
+.cube{width:140px;height:140px;position:relative;transform-style:preserve-3d;animation:cubeRot 16s linear infinite;}
+.cube-face{position:absolute;width:140px;height:140px;border:1.5px solid rgba(0,229,255,.45);background:rgba(0,229,255,.03);}
+.cube-face.fr{transform:translateZ(70px);}
+.cube-face.bk{transform:rotateY(180deg) translateZ(70px);}
+.cube-face.lt{transform:rotateY(-90deg) translateZ(70px);}
+.cube-face.rt{transform:rotateY(90deg) translateZ(70px);}
+.cube-face.tp{transform:rotateX(90deg) translateZ(70px);}
+.cube-face.bt{transform:rotateX(-90deg) translateZ(70px);}
+@keyframes cubeRot{from{transform:rotateX(18deg) rotateY(0);}to{transform:rotateX(18deg) rotateY(360deg);}}
+.hero-content{max-width:580px;z-index:2;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,229,255,.06);border:1px solid rgba(0,229,255,.2);padding:5px 15px;font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:28px;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:blink 1.5s step-end infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+h1{font-family:'Rajdhani',sans-serif;font-size:clamp(2.8rem,5vw,5rem);font-weight:700;line-height:.95;color:#fff;margin-bottom:10px;}
+h1 .k{color:var(--accent);}
+h1 .sub{display:block;font-size:.5em;font-weight:300;letter-spacing:.3em;color:var(--dim);text-transform:uppercase;margin-top:10px;}
+.hero-desc{font-size:1rem;line-height:1.85;color:var(--dim);margin:24px 0 40px;max-width:460px;}
+.hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+.btn-primary{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;padding:15px 38px;font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;clip-path:polygon(11px 0%,100% 0%,calc(100% - 11px) 100%,0% 100%);transition:all .3s;box-shadow:var(--glow2);}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(124,58,237,.65);}
+.btn-ghost{background:transparent;color:var(--text);border:1px solid var(--border2);padding:15px 38px;font-family:'Rajdhani',sans-serif;font-size:.95rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;clip-path:polygon(11px 0%,100% 0%,calc(100% - 11px) 100%,0% 100%);transition:all .3s;}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
 
-    /* SCANLINES */
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.08) 2px,
-        rgba(0,0,0,0.08) 4px
-      );
-      pointer-events: none;
-      z-index: 0;
-    }
+/* STATS */
+.stats{position:relative;z-index:1;display:flex;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.stat{flex:1;padding:36px 0;text-align:center;border-right:1px solid var(--border);}
+.stat:last-child{border-right:none;}
+.stat-num{font-family:'Rajdhani',sans-serif;font-size:2.6rem;font-weight:700;color:#fff;line-height:1;}
+.stat-num span{color:var(--accent);}
+.stat-lbl{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-top:6px;}
 
-    /* NAV */
-    nav {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 60px;
-      height: 72px;
-      background: rgba(5,8,16,0.85);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-    }
+/* ======= PRODUCTS ======= */
+.section{padding:100px 56px;position:relative;z-index:1;}
+.sec-tag{font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-bottom:14px;}
+.sec-title{font-family:'Rajdhani',sans-serif;font-size:clamp(1.8rem,3vw,2.8rem);font-weight:700;color:#fff;margin-bottom:50px;line-height:1.1;}
+#products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px;}
+.product-card{background:var(--panel);border:1px solid var(--border);overflow:hidden;transition:border-color .3s,transform .3s;cursor:pointer;}
+.product-card:hover{border-color:rgba(0,229,255,.3);transform:translateY(-4px);}
+.product-img{width:100%;height:220px;object-fit:cover;display:block;background:var(--panel2);}
+.product-img-placeholder{width:100%;height:220px;display:flex;align-items:center;justify-content:center;background:var(--panel2);border-bottom:1px solid var(--border);}
+.product-img-placeholder svg{width:60px;height:60px;stroke:var(--dim);fill:none;}
+.product-body{padding:28px;}
+.product-badge{display:inline-block;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);color:var(--accent);font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;padding:3px 10px;margin-bottom:12px;clip-path:polygon(5px 0%,100% 0%,calc(100% - 5px) 100%,0% 100%);}
+.product-name{font-family:'Rajdhani',sans-serif;font-size:1.25rem;font-weight:600;color:#fff;margin-bottom:8px;}
+.product-desc{font-size:.85rem;line-height:1.75;color:var(--dim);margin-bottom:20px;}
+.product-footer{display:flex;align-items:center;justify-content:space-between;}
+.product-price{font-family:'Rajdhani',sans-serif;font-size:1.5rem;font-weight:700;color:#fff;}
+.product-price span{color:var(--accent);}
+.btn-buy{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:9px 22px;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;clip-path:polygon(6px 0%,100% 0%,calc(100% - 6px) 100%,0% 100%);transition:all .3s;}
+.btn-buy:hover{background:var(--accent);color:var(--bg);box-shadow:var(--glow);}
+.no-products{text-align:center;padding:80px;color:var(--dim);font-size:1rem;letter-spacing:.1em;}
 
-    .nav-logo {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.6rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      color: #fff;
-    }
-    .nav-logo span { color: var(--accent); }
+/* ======= ORDER MODAL ======= */
+#order-modal{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:rgba(5,8,16,.85);backdrop-filter:blur(10px);}
+.modal-box{background:var(--panel);border:1px solid var(--border2);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-header{padding:32px 36px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:'Rajdhani',sans-serif;font-size:1.4rem;font-weight:700;color:#fff;letter-spacing:.06em;}
+.modal-close{background:none;border:none;color:var(--dim);cursor:pointer;font-size:1.4rem;line-height:1;transition:color .2s;}
+.modal-close:hover{color:var(--accent);}
+.modal-body{padding:28px 36px 36px;}
+.modal-product-info{background:var(--panel2);border:1px solid var(--border);padding:16px 20px;margin-bottom:28px;display:flex;align-items:center;gap:14px;}
+.modal-product-info img{width:60px;height:60px;object-fit:cover;}
+.modal-product-info .pname{font-family:'Rajdhani',sans-serif;font-size:1.05rem;color:#fff;font-weight:600;}
+.modal-product-info .pprice{font-family:'Rajdhani',sans-serif;font-size:.9rem;color:var(--accent);}
 
-    .nav-links {
-      display: flex;
-      gap: 40px;
-      list-style: none;
-    }
-    .nav-links a {
-      color: var(--text-dim);
-      text-decoration: none;
-      font-size: 0.85rem;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      transition: color 0.3s;
-    }
-    .nav-links a:hover { color: var(--accent); }
+/* FORM */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+.form-row.full{grid-template-columns:1fr;}
+.fg{display:flex;flex-direction:column;gap:7px;margin-bottom:16px;}
+label{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);}
+input,select,textarea{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:12px 16px;font-family:'Exo 2',sans-serif;font-size:.9rem;font-weight:300;outline:none;transition:border-color .25s,box-shadow .25s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 1px rgba(0,229,255,.12);}
+select option{background:var(--panel);}
+textarea{resize:vertical;min-height:90px;}
+.btn-submit{width:100%;padding:16px;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:#fff;box-shadow:var(--glow2);transition:all .3s;margin-top:8px;}
+.btn-submit:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(124,58,237,.6);}
+.btn-submit:disabled{opacity:.5;cursor:not-allowed;transform:none;}
 
-    .nav-cta {
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      padding: 10px 28px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.3s;
-      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
-    }
-    .nav-cta:hover {
-      background: var(--accent);
-      color: var(--bg);
-      box-shadow: var(--glow);
-    }
+/* ======= ORDER SUCCESS ======= */
+.order-success{text-align:center;padding:50px 20px;}
+.success-icon{font-size:2.8rem;color:var(--accent);margin-bottom:18px;}
+.success-title{font-family:'Rajdhani',sans-serif;font-size:1.8rem;color:#fff;margin-bottom:10px;}
+.success-text{color:var(--dim);font-size:.9rem;line-height:1.8;}
 
-    /* HERO */
-    .hero {
-      position: relative;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      padding: 120px 60px 80px;
-      z-index: 1;
-    }
+/* ======= LOGIN VIEW ======= */
+#view-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+.login-box{background:var(--panel);border:1px solid var(--border2);width:100%;max-width:420px;padding:52px 44px;}
+.login-logo{font-family:'Rajdhani',sans-serif;font-size:1.8rem;font-weight:700;color:#fff;text-align:center;margin-bottom:8px;letter-spacing:.1em;}
+.login-logo span{color:var(--accent);}
+.login-sub{text-align:center;font-size:.78rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:40px;}
+.login-err{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.3);color:var(--accent3);padding:12px 16px;font-size:.85rem;margin-bottom:20px;display:none;}
+.login-btn{width:100%;padding:15px;font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;background:linear-gradient(135deg,var(--accent2),var(--accent));border:none;color:#fff;margin-top:8px;transition:all .3s;box-shadow:var(--glow2);}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 0 50px rgba(124,58,237,.6);}
+.back-link{display:block;text-align:center;margin-top:24px;color:var(--dim);font-size:.8rem;cursor:pointer;transition:color .2s;}
+.back-link:hover{color:var(--accent);}
 
-    .hero-orb {
-      position: absolute;
-      top: 50%;
-      right: 8%;
-      transform: translateY(-50%);
-      width: 480px;
-      height: 480px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 35% 35%,
-        rgba(123,47,255,0.6) 0%,
-        rgba(0,229,255,0.3) 40%,
-        transparent 70%);
-      filter: blur(2px);
-      animation: orbPulse 6s ease-in-out infinite;
-    }
+/* ======= ADMIN VIEW ======= */
+#view-admin{min-height:100vh;display:flex;}
+.admin-sidebar{width:240px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;}
+.sidebar-logo{padding:24px 24px 20px;border-bottom:1px solid var(--border);}
+.sidebar-logo .lname{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:#fff;letter-spacing:.1em;}
+.sidebar-logo .lname span{color:var(--accent);}
+.sidebar-logo .lsub{font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-top:3px;}
+.sidebar-nav{flex:1;padding:16px 0;}
+.sidebar-item{display:flex;align-items:center;gap:12px;padding:13px 24px;color:var(--dim);font-size:.85rem;letter-spacing:.08em;cursor:pointer;transition:all .2s;border-left:3px solid transparent;}
+.sidebar-item svg{width:18px;height:18px;flex-shrink:0;}
+.sidebar-item:hover{color:var(--text);background:rgba(0,229,255,.04);border-left-color:rgba(0,229,255,.3);}
+.sidebar-item.active{color:var(--accent);background:rgba(0,229,255,.06);border-left-color:var(--accent);}
+.sidebar-footer{padding:16px 24px;border-top:1px solid var(--border);}
+.logout-btn{width:100%;padding:10px;font-family:'Rajdhani',sans-serif;font-size:.82rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;background:transparent;border:1px solid var(--border2);color:var(--dim);transition:all .25s;}
+.logout-btn:hover{border-color:var(--accent3);color:var(--accent3);}
+.admin-main{margin-left:240px;flex:1;padding:0;}
+.admin-topbar{height:64px;background:var(--panel);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 36px;justify-content:space-between;}
+.admin-topbar .page-title{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:600;color:#fff;letter-spacing:.08em;}
+.admin-topbar .admin-user{font-size:.78rem;color:var(--dim);}
+.admin-content{padding:36px;}
 
-    .hero-orb::before {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 50%;
-      border: 1px solid rgba(0,229,255,0.2);
-      animation: orbRotate 20s linear infinite;
-    }
+/* ADMIN PANELS */
+.admin-panel{display:none;}
+.admin-panel.active{display:block;}
 
-    .hero-orb::after {
-      content: '';
-      position: absolute;
-      inset: 30px;
-      border-radius: 50%;
-      border: 1px dashed rgba(123,47,255,0.3);
-      animation: orbRotate 12s linear infinite reverse;
-    }
+/* Dashboard cards */
+.dash-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:36px;}
+.dash-card{background:var(--panel);border:1px solid var(--border);padding:24px;position:relative;overflow:hidden;}
+.dash-card::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent);}
+.dash-card.purple::before{background:var(--accent2);}
+.dash-card.red::before{background:var(--accent3);}
+.dash-card.green::before{background:var(--green);}
+.dash-card-label{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin-bottom:10px;}
+.dash-card-val{font-family:'Rajdhani',sans-serif;font-size:2.2rem;font-weight:700;color:#fff;}
+.dash-card-val span{font-size:1rem;color:var(--dim);}
 
-    /* 3D wireframe cube inside orb */
-    .cube-wrap {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+/* Orders table */
+.tbl-wrap{background:var(--panel);border:1px solid var(--border);overflow:hidden;}
+.tbl-head{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.tbl-head-title{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:600;color:#fff;letter-spacing:.06em;}
+table{width:100%;border-collapse:collapse;}
+th{padding:14px 20px;text-align:left;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);font-weight:500;}
+td{padding:14px 20px;font-size:.85rem;color:var(--text);border-bottom:1px solid rgba(26,42,64,.5);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(0,229,255,.02);}
+.badge{display:inline-block;padding:3px 10px;font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;clip-path:polygon(4px 0%,100% 0%,calc(100% - 4px) 100%,0% 100%);}
+.badge.new{background:rgba(0,229,255,.12);color:var(--accent);}
+.badge.done{background:rgba(16,185,129,.12);color:var(--green);}
+.del-btn{background:none;border:none;color:var(--dim);cursor:pointer;font-size:1rem;transition:color .2s;}
+.del-btn:hover{color:var(--accent3);}
 
-    .cube {
-      width: 160px;
-      height: 160px;
-      position: relative;
-      transform-style: preserve-3d;
-      animation: cubeRotate 14s linear infinite;
-    }
+/* Product Manager */
+.pm-toolbar{display:flex;gap:14px;margin-bottom:24px;align-items:center;flex-wrap:wrap;}
+.pm-toolbar input{max-width:280px;}
+.btn-add{background:linear-gradient(135deg,var(--accent2),var(--accent));color:#fff;border:none;padding:12px 26px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:all .3s;}
+.btn-add:hover{box-shadow:var(--glow2);}
+.pm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+.pm-card{background:var(--panel);border:1px solid var(--border);overflow:hidden;}
+.pm-img{width:100%;height:160px;object-fit:cover;display:block;background:var(--panel2);}
+.pm-img-ph{width:100%;height:160px;display:flex;align-items:center;justify-content:center;background:var(--panel2);border-bottom:1px solid var(--border);}
+.pm-img-ph svg{width:40px;height:40px;stroke:var(--dim);}
+.pm-body{padding:18px;}
+.pm-name{font-family:'Rajdhani',sans-serif;font-size:1.05rem;font-weight:600;color:#fff;margin-bottom:4px;}
+.pm-price{font-family:'Rajdhani',sans-serif;font-size:.95rem;color:var(--accent);margin-bottom:14px;}
+.pm-actions{display:flex;gap:8px;}
+.btn-edit,.btn-del{flex:1;padding:8px;font-family:'Rajdhani',sans-serif;font-size:.76rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--dim);transition:all .2s;}
+.btn-edit:hover{border-color:var(--accent);color:var(--accent);}
+.btn-del:hover{border-color:var(--accent3);color:var(--accent3);}
 
-    .cube-face {
-      position: absolute;
-      width: 160px;
-      height: 160px;
-      border: 1.5px solid rgba(0,229,255,0.5);
-      background: rgba(0,229,255,0.03);
-    }
+/* FORM MODAL */
+#form-modal{position:fixed;inset:0;z-index:600;display:flex;align-items:center;justify-content:center;background:rgba(5,8,16,.88);backdrop-filter:blur(10px);}
+.fmodal-box{background:var(--panel);border:1px solid var(--border2);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;}
+.fmodal-header{padding:28px 32px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.fmodal-title{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:#fff;}
+.fmodal-body{padding:24px 32px 32px;}
+.img-preview{width:100%;height:160px;object-fit:cover;margin-top:10px;border:1px solid var(--border);display:none;}
 
-    .cube-face.front  { transform: translateZ(80px); }
-    .cube-face.back   { transform: rotateY(180deg) translateZ(80px); }
-    .cube-face.left   { transform: rotateY(-90deg) translateZ(80px); }
-    .cube-face.right  { transform: rotateY(90deg) translateZ(80px); }
-    .cube-face.top    { transform: rotateX(90deg) translateZ(80px); }
-    .cube-face.bottom { transform: rotateX(-90deg) translateZ(80px); }
+/* Alert */
+.alert{padding:12px 18px;font-size:.85rem;margin-bottom:16px;border-left:3px solid var(--accent);background:rgba(0,229,255,.06);display:none;}
+.alert.error{border-color:var(--accent3);background:rgba(244,63,94,.06);color:var(--accent3);}
+.alert.success{border-color:var(--green);background:rgba(16,185,129,.06);color:var(--green);}
 
-    @keyframes cubeRotate {
-      from { transform: rotateX(20deg) rotateY(0deg); }
-      to   { transform: rotateX(20deg) rotateY(360deg); }
-    }
+/* Settings */
+.settings-card{background:var(--panel);border:1px solid var(--border);padding:30px;margin-bottom:20px;}
+.settings-title{font-family:'Rajdhani',sans-serif;font-size:1rem;font-weight:600;color:#fff;margin-bottom:20px;letter-spacing:.06em;}
+.input-hint{font-size:.75rem;color:var(--dim);margin-top:5px;}
+.btn-save{background:var(--accent2);color:#fff;border:none;padding:12px 30px;font-family:'Rajdhani',sans-serif;font-size:.88rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all .3s;}
+.btn-save:hover{background:var(--accent);box-shadow:var(--glow);}
 
-    @keyframes orbPulse {
-      0%, 100% { transform: translateY(-50%) scale(1); opacity: 0.9; }
-      50%       { transform: translateY(-50%) scale(1.04); opacity: 1; }
-    }
+/* Footer */
+footer{position:relative;z-index:1;padding:48px 56px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.footer-logo{font-family:'Rajdhani',sans-serif;font-size:1.2rem;font-weight:700;color:#fff;}
+.footer-logo span{color:var(--accent);}
+.footer-copy{font-size:.78rem;color:var(--dim);}
+.gh-link{display:inline-flex;align-items:center;gap:7px;color:var(--dim);text-decoration:none;font-size:.8rem;border:1px solid var(--border);padding:8px 18px;transition:all .25s;}
+.gh-link:hover{border-color:var(--accent);color:var(--accent);}
+.gh-link svg{width:16px;height:16px;}
 
-    @keyframes orbRotate {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-
-    .hero-content { max-width: 620px; position: relative; z-index: 2; }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(0,229,255,0.06);
-      border: 1px solid rgba(0,229,255,0.2);
-      padding: 6px 16px;
-      font-size: 0.75rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 32px;
-      clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
-    }
-    .badge-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      animation: blink 1.4s step-end infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-    h1 {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: clamp(3rem, 5vw, 5.5rem);
-      font-weight: 700;
-      line-height: 0.95;
-      letter-spacing: -0.01em;
-      color: #fff;
-      margin-bottom: 12px;
-    }
-    h1 .k { color: var(--accent); }
-    h1 .sub {
-      display: block;
-      font-size: 0.55em;
-      font-weight: 300;
-      letter-spacing: 0.3em;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      margin-top: 8px;
-    }
-
-    .hero-desc {
-      font-size: 1.05rem;
-      line-height: 1.8;
-      color: var(--text-dim);
-      margin: 28px 0 44px;
-      max-width: 480px;
-    }
-
-    .hero-actions { display: flex; gap: 16px; flex-wrap: wrap; }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      color: #fff;
-      border: none;
-      padding: 16px 40px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      cursor: pointer;
-      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
-      transition: all 0.3s;
-      box-shadow: 0 0 30px rgba(123,47,255,0.5);
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 50px rgba(123,47,255,0.7);
-    }
-
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 16px 40px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      cursor: pointer;
-      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
-      transition: all 0.3s;
-    }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* STATS */
-    .stats {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      gap: 0;
-      padding: 0 60px;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-    .stat {
-      flex: 1;
-      padding: 40px 0;
-      text-align: center;
-      border-right: 1px solid var(--border);
-    }
-    .stat:last-child { border-right: none; }
-    .stat-num {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 2.8rem;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1;
-    }
-    .stat-num span { color: var(--accent); }
-    .stat-label {
-      font-size: 0.75rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      margin-top: 8px;
-    }
-
-    /* FEATURES */
-    section { position: relative; z-index: 1; }
-
-    .features {
-      padding: 120px 60px;
-    }
-
-    .section-tag {
-      font-size: 0.75rem;
-      letter-spacing: 0.3em;
-      text-transform: uppercase;
-      color: var(--accent);
-      margin-bottom: 16px;
-    }
-
-    .section-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: clamp(2rem, 3.5vw, 3.2rem);
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 60px;
-      line-height: 1.1;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2px;
-    }
-
-    .feature-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      padding: 48px 40px;
-      position: relative;
-      overflow: hidden;
-      transition: border-color 0.3s;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 3px;
-      height: 0;
-      background: linear-gradient(var(--accent2), var(--accent));
-      transition: height 0.4s ease;
-    }
-    .feature-card:hover::before { height: 100%; }
-    .feature-card:hover { border-color: rgba(0,229,255,0.2); }
-
-    .feature-icon {
-      width: 52px;
-      height: 52px;
-      margin-bottom: 28px;
-      position: relative;
-    }
-    .feature-icon svg {
-      width: 100%;
-      height: 100%;
-      stroke: var(--accent);
-      fill: none;
-      stroke-width: 1.5;
-    }
-
-    .feature-num {
-      position: absolute;
-      top: 40px;
-      right: 40px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 4rem;
-      font-weight: 700;
-      color: rgba(255,255,255,0.04);
-      line-height: 1;
-    }
-
-    .feature-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: #fff;
-      letter-spacing: 0.05em;
-      margin-bottom: 12px;
-    }
-
-    .feature-text {
-      font-size: 0.9rem;
-      line-height: 1.8;
-      color: var(--text-dim);
-    }
-
-    /* PRICING */
-    .pricing {
-      padding: 120px 60px;
-      background: var(--bg2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 24px;
-      margin-top: 60px;
-    }
-
-    .price-card {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      padding: 48px 40px;
-      position: relative;
-      transition: all 0.3s;
-    }
-    .price-card.featured {
-      border-color: var(--accent2);
-      box-shadow: 0 0 60px rgba(123,47,255,0.2);
-    }
-    .price-card.featured::before {
-      content: 'LEGJOBB AJÁNLAT';
-      position: absolute;
-      top: -1px; left: 50%; transform: translateX(-50%);
-      background: linear-gradient(90deg, var(--accent2), var(--accent));
-      color: #fff;
-      font-size: 0.65rem;
-      font-family: 'Rajdhani', sans-serif;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      padding: 5px 20px;
-    }
-
-    .price-tier {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 0.25em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-      margin-bottom: 24px;
-    }
-    .price-card.featured .price-tier { color: var(--accent); }
-
-    .price-amount {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 3.5rem;
-      font-weight: 700;
-      color: #fff;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    .price-amount sup {
-      font-size: 1.5rem;
-      vertical-align: super;
-      color: var(--text-dim);
-    }
-    .price-currency {
-      font-size: 0.8rem;
-      color: var(--text-dim);
-      letter-spacing: 0.1em;
-      margin-bottom: 32px;
-    }
-
-    .price-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 32px 0;
-    }
-
-    .price-features {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      margin-bottom: 40px;
-    }
-    .price-features li {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.88rem;
-      color: var(--text-dim);
-    }
-    .price-features li::before {
-      content: '';
-      width: 16px;
-      height: 16px;
-      border: 1px solid var(--accent);
-      border-radius: 2px;
-      background: rgba(0,229,255,0.1);
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .price-features li.active {
-      color: var(--text);
-    }
-    .price-features li.active::before {
-      background: var(--accent);
-      box-shadow: 0 0 10px rgba(0,229,255,0.4);
-    }
-
-    .btn-order {
-      width: 100%;
-      padding: 16px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.3s;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-    .btn-order:hover {
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    .price-card.featured .btn-order {
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      border: none;
-      color: #fff;
-      box-shadow: 0 0 30px rgba(123,47,255,0.4);
-    }
-    .price-card.featured .btn-order:hover {
-      box-shadow: 0 0 50px rgba(123,47,255,0.6);
-      transform: translateY(-2px);
-    }
-
-    /* ORDER FORM */
-    .order-section {
-      padding: 120px 60px;
-    }
-
-    .order-wrap {
-      max-width: 740px;
-      margin: 0 auto;
-    }
-
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-top: 48px;
-    }
-    .form-grid .full { grid-column: 1 / -1; }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    label {
-      font-size: 0.72rem;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--text-dim);
-    }
-
-    input, select, textarea {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 14px 18px;
-      font-family: 'Exo 2', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 300;
-      outline: none;
-      transition: border-color 0.3s, box-shadow 0.3s;
-      width: 100%;
-    }
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 1px rgba(0,229,255,0.15);
-    }
-    select option { background: var(--panel); }
-    textarea { resize: vertical; min-height: 120px; }
-
-    .form-submit {
-      margin-top: 32px;
-      text-align: center;
-    }
-    .btn-submit {
-      background: linear-gradient(135deg, var(--accent2), var(--accent));
-      color: #fff;
-      border: none;
-      padding: 20px 80px;
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      cursor: pointer;
-      clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
-      transition: all 0.3s;
-      box-shadow: 0 0 40px rgba(123,47,255,0.4);
-    }
-    .btn-submit:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 0 70px rgba(123,47,255,0.7);
-    }
-
-    /* SUCCESS MESSAGE */
-    .success-msg {
-      display: none;
-      text-align: center;
-      padding: 60px;
-      background: var(--panel);
-      border: 1px solid rgba(0,229,255,0.3);
-      position: relative;
-      overflow: hidden;
-    }
-    .success-msg::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), transparent);
-    }
-    .success-icon {
-      font-size: 3rem;
-      margin-bottom: 20px;
-      color: var(--accent);
-    }
-    .success-title {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 2rem;
-      color: #fff;
-      margin-bottom: 12px;
-    }
-    .success-text { color: var(--text-dim); }
-
-    /* FOOTER */
-    footer {
-      position: relative;
-      z-index: 1;
-      padding: 60px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .footer-logo {
-      font-family: 'Rajdhani', sans-serif;
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #fff;
-    }
-    .footer-logo span { color: var(--accent); }
-
-    .footer-copy {
-      font-size: 0.8rem;
-      color: var(--text-dim);
-      letter-spacing: 0.1em;
-    }
-
-    /* GITHUB BADGE */
-    .github-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--text-dim);
-      text-decoration: none;
-      font-size: 0.85rem;
-      border: 1px solid var(--border);
-      padding: 8px 20px;
-      transition: all 0.3s;
-    }
-    .github-link:hover { border-color: var(--accent); color: var(--accent); }
-    .github-link svg { width: 18px; height: 18px; }
-
-    /* ANIMATIONS */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .hero-badge  { animation: fadeUp 0.6s ease 0.1s both; }
-    h1           { animation: fadeUp 0.6s ease 0.2s both; }
-    .hero-desc   { animation: fadeUp 0.6s ease 0.35s both; }
-    .hero-actions{ animation: fadeUp 0.6s ease 0.5s both; }
-
-    /* MOBILE */
-    @media(max-width: 900px) {
-      nav { padding: 0 24px; }
-      .nav-links { display: none; }
-      .hero, .features, .pricing, .order-section, footer, .stats { padding-left: 24px; padding-right: 24px; }
-      .features-grid, .pricing-grid { grid-template-columns: 1fr; }
-      .hero-orb { width: 300px; height: 300px; right: -40px; opacity: 0.5; }
-      .form-grid { grid-template-columns: 1fr; }
-      footer { flex-direction: column; gap: 24px; text-align: center; }
-      .stats { flex-direction: column; }
-      .stat { border-right: none; border-bottom: 1px solid var(--border); }
-      .stat:last-child { border-bottom: none; }
-    }
-  </style>
+/* Responsive */
+@media(max-width:900px){
+  nav{padding:0 20px;}
+  .hero,.section,footer{padding-left:20px;padding-right:20px;}
+  .hero-orb{right:-60px;opacity:.4;width:320px;height:320px;}
+  .stats{flex-direction:column;}
+  .stat{border-right:none;border-bottom:1px solid var(--border);}
+  .dash-grid{grid-template-columns:1fr 1fr;}
+  .admin-sidebar{width:200px;}
+  .admin-main{margin-left:200px;}
+}
+</style>
 </head>
 <body>
 
-  <!-- NAV -->
+<!-- ============ SITE VIEW ============ -->
+<div id="view-site">
   <nav>
-    <div class="nav-logo"><span>K3D</span> VISUALISER</div>
+    <div class="nav-logo" onclick="scrollTo(0,0)"><span>K3D</span> VISUALISER</div>
     <ul class="nav-links">
-      <li><a href="#features">Funkciók</a></li>
-      <li><a href="#pricing">Árak</a></li>
-      <li><a href="#order">Rendelés</a></li>
+      <li><a href="#sec-products">Termékek</a></li>
+      <li><a href="#sec-about">Rólunk</a></li>
     </ul>
-    <button class="nav-cta" onclick="document.getElementById('order').scrollIntoView({behavior:'smooth'})">Megrendelem</button>
+    <div class="nav-right">
+      <button class="btn-nav" onclick="showLogin()">Admin</button>
+      <button class="btn-nav primary" onclick="document.getElementById('sec-products').scrollIntoView({behavior:'smooth'})">Rendelés</button>
+    </div>
   </nav>
 
   <!-- HERO -->
-  <section class="hero">
+  <section class="hero z1">
     <div class="hero-orb">
-      <div class="cube-wrap">
+      <div class="cube-host">
         <div class="cube">
-          <div class="cube-face front"></div>
-          <div class="cube-face back"></div>
-          <div class="cube-face left"></div>
-          <div class="cube-face right"></div>
-          <div class="cube-face top"></div>
-          <div class="cube-face bottom"></div>
+          <div class="cube-face fr"></div><div class="cube-face bk"></div>
+          <div class="cube-face lt"></div><div class="cube-face rt"></div>
+          <div class="cube-face tp"></div><div class="cube-face bt"></div>
         </div>
       </div>
     </div>
     <div class="hero-content">
-      <div class="hero-badge"><span class="badge-dot"></span> Legújabb generáció &mdash; v3.0</div>
-      <h1><span class="k">K3D</span> VISUALISER<span class="sub">3D Megjelenítő Rendszer</span></h1>
-      <p class="hero-desc">
-        Professzionális 3D vizualizációs megoldás, amely valós időben rendereli az összetett geometriákat. Ipari pontossággal, fogyasztói egyszerűséggel.
-      </p>
+      <div class="hero-badge"><span class="dot"></span> DIY Kit – Kézzel rakd össze</div>
+      <h1><span class="k">K3D</span> VISUALISER<span class="sub">3D Megjelenítő DIY Készlet</span></h1>
+      <p class="hero-desc">Saját kezűleg összerakható 3D vizualizációs készlet. Minden alkatrész benne van, részletes útmutatóval. Tökéletes projekt kezdőknek és haladóknak egyaránt.</p>
       <div class="hero-actions">
-        <button class="btn-primary" onclick="document.getElementById('order').scrollIntoView({behavior:'smooth'})">Megrendelem most</button>
-        <button class="btn-ghost" onclick="document.getElementById('features').scrollIntoView({behavior:'smooth'})">Tudj meg többet</button>
+        <button class="btn-primary" onclick="document.getElementById('sec-products').scrollIntoView({behavior:'smooth'})">Termékek megtekintése</button>
+        <button class="btn-ghost" onclick="document.getElementById('sec-about').scrollIntoView({behavior:'smooth'})">Tudj meg többet</button>
       </div>
     </div>
   </section>
 
   <!-- STATS -->
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-num">120<span>fps</span></div>
-      <div class="stat-label">Valós idejű renderelés</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num"><span>∞</span> 4K</div>
-      <div class="stat-label">Felbontás támogatás</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">2<span>ms</span></div>
-      <div class="stat-label">Késleltetés</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">500<span>+</span></div>
-      <div class="stat-label">Elégedett ügyfél</div>
-    </div>
+  <div class="stats z1">
+    <div class="stat"><div class="stat-num">100<span>%</span></div><div class="stat-lbl">DIY – Te rakod össze</div></div>
+    <div class="stat"><div class="stat-num"><span>~</span>2h</div><div class="stat-lbl">Összeszerelési idő</div></div>
+    <div class="stat"><div class="stat-num">3D<span></span></div><div class="stat-lbl">Nyomtatott alkatrészek</div></div>
+    <div class="stat"><div class="stat-num">HU<span></span></div><div class="stat-lbl">Magyar szállítás</div></div>
   </div>
 
-  <!-- FEATURES -->
-  <section class="features" id="features">
-    <div class="section-tag">// Funkciók</div>
-    <div class="section-title">Miért válassza a K3D-t?</div>
-    <div class="features-grid">
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-        </div>
-        <div class="feature-num">01</div>
-        <div class="feature-title">Valós idejű 3D</div>
-        <div class="feature-text">Hardver-gyorsított renderelés OpenGL és Vulkan backend támogatással. Millió poligon gond nélkül, akár 120 FPS-sel.</div>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
-        </div>
-        <div class="feature-num">02</div>
-        <div class="feature-title">Adaptív Megvilágítás</div>
-        <div class="feature-text">PBR alapú megvilágítási rendszer HDRI környezeti térképpel, árnyékkövető algoritmussal és sugárkövetéssel.</div>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
-        </div>
-        <div class="feature-num">03</div>
-        <div class="feature-title">Formátum Kompatibilitás</div>
-        <div class="feature-text">Natív támogatás STL, OBJ, GLTF, FBX, STEP és IGES formátumokhoz. Import/export egy kattintásra.</div>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-        </div>
-        <div class="feature-num">04</div>
-        <div class="feature-title">Analitika & Mérés</div>
-        <div class="feature-text">Beépített CAD mérőeszközök: távolság, szög, felszín, térfogat számítás precíziós móddal.</div>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-        </div>
-        <div class="feature-num">05</div>
-        <div class="feature-title">Biztonságos Munkakörnyezet</div>
-        <div class="feature-text">End-to-end titkosítás, lokális feldolgozás és opcionális felhőszinkron GDPR-kompatibilis módon.</div>
-      </div>
-
-      <div class="feature-card">
-        <div class="feature-icon">
-          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-        </div>
-        <div class="feature-num">06</div>
-        <div class="feature-title">API & Integráció</div>
-        <div class="feature-text">REST API és WebSocket támogatás. Zökkenőmentes integráció CAD szoftverekkel, ERP rendszerekkel és webes platformokkal.</div>
-      </div>
-
+  <!-- PRODUCTS -->
+  <section class="section" id="sec-products">
+    <div class="sec-tag z1">// Termékek</div>
+    <div class="sec-title z1">DIY Kit Készletek</div>
+    <div id="products-grid" class="z1">
+      <div class="no-products">Töltés...</div>
     </div>
   </section>
 
-  <!-- PRICING -->
-  <section class="pricing" id="pricing">
-    <div class="section-tag">// Árak</div>
-    <div class="section-title">Válasszon csomagot</div>
-
-    <div class="pricing-grid">
-
-      <div class="price-card">
-        <div class="price-tier">Starter</div>
-        <div class="price-amount"><sup>€</sup>299</div>
-        <div class="price-currency">egyszeri vásárlás &mdash; 1 licenc</div>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li class="active">Valós idejű 3D renderelés</li>
-          <li class="active">STL, OBJ, GLTF import</li>
-          <li class="active">Alapmérési eszközök</li>
-          <li class="active">Email support</li>
-          <li>Multi-user licenc</li>
-          <li>API hozzáférés</li>
-          <li>Prioritásos support</li>
-        </ul>
-        <button class="btn-order" onclick="selectPlan('Starter – €299')">Ezt választom</button>
-      </div>
-
-      <div class="price-card featured">
-        <div class="price-tier">Professional</div>
-        <div class="price-amount"><sup>€</sup>699</div>
-        <div class="price-currency">egyszeri vásárlás &mdash; 5 licenc</div>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li class="active">Valós idejű 3D renderelés</li>
-          <li class="active">Összes formátum támogatás</li>
-          <li class="active">Teljes mérőeszköz csomag</li>
-          <li class="active">Prioritásos email + chat</li>
-          <li class="active">Multi-user licenc (5)</li>
-          <li class="active">API hozzáférés</li>
-          <li>Dedikált support</li>
-        </ul>
-        <button class="btn-order" onclick="selectPlan('Professional – €699')">Ezt választom</button>
-      </div>
-
-      <div class="price-card">
-        <div class="price-tier">Enterprise</div>
-        <div class="price-amount">Egyedi</div>
-        <div class="price-currency">éves szerződés &mdash; korlátlan licenc</div>
-        <div class="price-divider"></div>
-        <ul class="price-features">
-          <li class="active">Valós idejű 3D renderelés</li>
-          <li class="active">Összes formátum támogatás</li>
-          <li class="active">Teljes mérőeszköz csomag</li>
-          <li class="active">24/7 dedikált support</li>
-          <li class="active">Korlátlan licenc</li>
-          <li class="active">Teljes API hozzáférés</li>
-          <li class="active">On-premise telepítés</li>
-        </ul>
-        <button class="btn-order" onclick="selectPlan('Enterprise – Egyedi árajánlat')">Ajánlatot kérek</button>
-      </div>
-
+  <!-- ABOUT -->
+  <section class="section" id="sec-about" style="background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+    <div class="z1">
+      <div class="sec-tag">// Rólunk</div>
+      <div class="sec-title" style="margin-bottom:24px;">Kris3D Lab</div>
+      <p style="max-width:620px;line-height:1.9;color:var(--dim);font-size:.95rem;">
+        A K3D Visualiser egy szenvedélyes projekt – minden kitet saját kezűleg készítek, 3D nyomtatással és precíz összeszereléssel. 
+        A cél, hogy egy összetett és látványos eszközt adj a kezeidbe, amelyet <em>te magad</em> raksz össze, és büszkén mutathatsz meg másoknak.
+        <br/><br/>
+        Kérdés esetén írj: <a href="mailto:kris3dlab@gmail.com" style="color:var(--accent);">kris3dlab@gmail.com</a>
+      </p>
     </div>
   </section>
 
-  <!-- ORDER FORM -->
-  <section class="order-section" id="order">
-    <div class="order-wrap">
-      <div class="section-tag">// Rendelés</div>
-      <div class="section-title">Megrendelő Űrlap</div>
-
-      <div id="orderForm">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Vezetéknév *</label>
-            <input type="text" id="lastName" placeholder="Kovács" required />
-          </div>
-          <div class="form-group">
-            <label>Keresztnév *</label>
-            <input type="text" id="firstName" placeholder="János" required />
-          </div>
-          <div class="form-group full">
-            <label>Email cím *</label>
-            <input type="email" id="email" placeholder="kovacs.janos@ceg.hu" required />
-          </div>
-          <div class="form-group">
-            <label>Telefonszám</label>
-            <input type="tel" id="phone" placeholder="+36 30 123 4567" />
-          </div>
-          <div class="form-group">
-            <label>Cég neve</label>
-            <input type="text" id="company" placeholder="Példa Kft." />
-          </div>
-          <div class="form-group full">
-            <label>Választott csomag *</label>
-            <select id="plan">
-              <option value="">— Válasszon csomagot —</option>
-              <option value="Starter – €299">Starter – €299</option>
-              <option value="Professional – €699">Professional – €699</option>
-              <option value="Enterprise – Egyedi árajánlat">Enterprise – Egyedi árajánlat</option>
-            </select>
-          </div>
-          <div class="form-group full">
-            <label>Megjegyzés</label>
-            <textarea id="message" placeholder="Egyéb igény, kérdés, speciális konfiguráció..."></textarea>
-          </div>
-        </div>
-        <div class="form-submit">
-          <button class="btn-submit" onclick="submitOrder()">Megrendelés elküldése &#8594;</button>
-        </div>
-      </div>
-
-      <div class="success-msg" id="successMsg">
-        <div class="success-icon">✦</div>
-        <div class="success-title">Köszönjük a megrendelést!</div>
-        <p class="success-text">Munkatársaink hamarosan felveszik Önnel a kapcsolatot a megadott email-en.<br>Várható válaszidő: 1 munkanapon belül.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
   <footer>
     <div class="footer-logo"><span>K3D</span> VISUALISER</div>
-    <div class="footer-copy">© 2026 K3D Technologies &mdash; Minden jog fenntartva</div>
-    <a href="https://github.com" class="github-link" target="_blank">
+    <div class="footer-copy">© 2026 Kris3D Lab – Minden jog fenntartva</div>
+    <a href="https://github.com" class="gh-link" target="_blank">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
       GitHub
     </a>
   </footer>
+</div>
 
-  <script>
-    function selectPlan(plan) {
-      const select = document.getElementById('plan');
-      select.value = plan;
-      document.getElementById('order').scrollIntoView({ behavior: 'smooth' });
-    }
+<!-- ============ ORDER MODAL ============ -->
+<div id="order-modal" class="hidden">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">Megrendelés</div>
+      <button class="modal-close" onclick="closeOrderModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="order-form-wrap">
+        <div class="modal-product-info" id="modal-product-info"></div>
+        <div class="form-row">
+          <div class="fg"><label>Vezetéknév *</label><input id="o-last" type="text" placeholder="Kovács"/></div>
+          <div class="fg"><label>Keresztnév *</label><input id="o-first" type="text" placeholder="János"/></div>
+        </div>
+        <div class="fg"><label>Email *</label><input id="o-email" type="email" placeholder="email@example.com"/></div>
+        <div class="fg"><label>Telefonszám</label><input id="o-phone" type="tel" placeholder="+36 30 123 4567"/></div>
+        <div class="fg"><label>Szállítási cím *</label><input id="o-address" type="text" placeholder="1234 Budapest, Példa u. 1."/></div>
+        <div class="fg"><label>Megjegyzés</label><textarea id="o-note" placeholder="Egyéb igény, kérdés..."></textarea></div>
+        <div class="alert error" id="order-err"></div>
+        <button class="btn-submit" id="order-submit-btn" onclick="submitOrder()">Megrendelés elküldése →</button>
+      </div>
+      <div class="order-success hidden" id="order-success">
+        <div class="success-icon">✦</div>
+        <div class="success-title">Köszönöm a rendelést!</div>
+        <p class="success-text">Hamarosan felveszem veled a kapcsolatot.<br/>Várható válasz: 1 munkanapon belül.</p>
+        <br/>
+        <button class="btn-ghost" style="margin:0 auto;display:block;" onclick="closeOrderModal()">Bezárás</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-    function submitOrder() {
-      const last  = document.getElementById('lastName').value.trim();
-      const first = document.getElementById('firstName').value.trim();
-      const email = document.getElementById('email').value.trim();
-      const plan  = document.getElementById('plan').value;
+<!-- ============ LOGIN VIEW ============ -->
+<div id="view-login" class="hidden">
+  <div class="login-box">
+    <div class="login-logo"><span>K3D</span> ADMIN</div>
+    <div class="login-sub">Adminisztrátori bejelentkezés</div>
+    <div class="login-err" id="login-err">Hibás email vagy jelszó!</div>
+    <div class="fg"><label>Email</label><input id="l-email" type="email" placeholder="admin@email.com" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <div class="fg"><label>Jelszó</label><input id="l-pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+    <button class="login-btn" onclick="doLogin()">Bejelentkezés</button>
+    <span class="back-link" onclick="showSite()">← Vissza a weboldalra</span>
+  </div>
+</div>
 
-      if (!last || !first || !email || !plan) {
-        const empties = [];
-        if (!last)  empties.push('Vezetéknév');
-        if (!first) empties.push('Keresztnév');
-        if (!email) empties.push('Email cím');
-        if (!plan)  empties.push('Csomag');
-        alert('Kérem töltse ki a kötelező mezőket:\n' + empties.join(', '));
-        return;
+<!-- ============ ADMIN VIEW ============ -->
+<div id="view-admin" class="hidden">
+  <div class="admin-sidebar">
+    <div class="sidebar-logo">
+      <div class="lname"><span>K3D</span> ADMIN</div>
+      <div class="lsub">Kezelőfelület</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-item active" onclick="adminTab('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </div>
+      <div class="sidebar-item" onclick="adminTab('orders',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        Rendelések
+      </div>
+      <div class="sidebar-item" onclick="adminTab('products',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        Termékek
+      </div>
+      <div class="sidebar-item" onclick="adminTab('settings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        Beállítások
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">Kijelentkezés</button>
+    </div>
+  </div>
+
+  <div class="admin-main">
+    <div class="admin-topbar">
+      <div class="page-title" id="admin-page-title">Dashboard</div>
+      <div class="admin-user">kris3dlab@gmail.com</div>
+    </div>
+    <div class="admin-content">
+
+      <!-- DASHBOARD -->
+      <div class="admin-panel active" id="panel-dashboard">
+        <div class="dash-grid">
+          <div class="dash-card"><div class="dash-card-label">Összes rendelés</div><div class="dash-card-val" id="d-total">0</div></div>
+          <div class="dash-card purple"><div class="dash-card-label">Új rendelések</div><div class="dash-card-val" id="d-new">0</div></div>
+          <div class="dash-card green"><div class="dash-card-label">Termékek</div><div class="dash-card-val" id="d-products">0</div></div>
+          <div class="dash-card red"><div class="dash-card-label">Teljesített</div><div class="dash-card-val" id="d-done">0</div></div>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><div class="tbl-head-title">Legutóbbi rendelések</div></div>
+          <table>
+            <thead><tr><th>#</th><th>Név</th><th>Termék</th><th>Email</th><th>Dátum</th><th>Státusz</th></tr></thead>
+            <tbody id="dash-orders-tbody"><tr><td colspan="6" style="text-align:center;color:var(--dim);padding:30px;">Nincs még rendelés</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ORDERS -->
+      <div class="admin-panel" id="panel-orders">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div></div>
+          <button class="btn-add" onclick="exportOrders()">⬇ Export CSV</button>
+        </div>
+        <div class="tbl-wrap">
+          <div class="tbl-head"><div class="tbl-head-title">Összes rendelés</div></div>
+          <table>
+            <thead><tr><th>#</th><th>Név</th><th>Termék</th><th>Email</th><th>Telefon</th><th>Cím</th><th>Megjegyzés</th><th>Dátum</th><th>Státusz</th><th></th></tr></thead>
+            <tbody id="all-orders-tbody"><tr><td colspan="10" style="text-align:center;color:var(--dim);padding:30px;">Nincs még rendelés</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PRODUCTS -->
+      <div class="admin-panel" id="panel-products">
+        <div class="pm-toolbar">
+          <button class="btn-add" onclick="openProductForm()">+ Új termék</button>
+        </div>
+        <div class="pm-grid" id="admin-products-grid"></div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="admin-panel" id="panel-settings">
+        <div class="settings-card">
+          <div class="settings-title">EmailJS Beállítások</div>
+          <p style="font-size:.82rem;color:var(--dim);margin-bottom:20px;line-height:1.7;">
+            Az email értesítőhöz regisztrálj a <a href="https://www.emailjs.com" target="_blank" style="color:var(--accent);">emailjs.com</a> oldalon (ingyenes). 
+            Hozz létre egy service-t és egy template-et, majd add meg az adatokat itt.
+          </p>
+          <div class="fg">
+            <label>EmailJS Public Key</label>
+            <input id="ejs-pubkey" type="text" placeholder="pl. abc123XYZ..."/>
+            <div class="input-hint">Account → API Keys → Public Key</div>
+          </div>
+          <div class="fg">
+            <label>Service ID</label>
+            <input id="ejs-service" type="text" placeholder="pl. service_xxxxxx"/>
+          </div>
+          <div class="fg">
+            <label>Template ID</label>
+            <input id="ejs-template" type="text" placeholder="pl. template_xxxxxx"/>
+            <div class="input-hint">A template-ben használható változók: {{from_name}}, {{product}}, {{email}}, {{phone}}, {{address}}, {{note}}</div>
+          </div>
+          <div class="alert" id="settings-alert"></div>
+          <button class="btn-save" onclick="saveSettings()">Mentés</button>
+        </div>
+        <div class="settings-card">
+          <div class="settings-title">Weboldal szöveg – Hero</div>
+          <div class="fg"><label>Hero alcím</label><input id="set-hero-sub" type="text" placeholder="DIY Kit – Kézzel rakd össze"/></div>
+          <div class="fg"><label>Hero leírás</label><textarea id="set-hero-desc"></textarea></div>
+          <div class="alert" id="settings-alert2"></div>
+          <button class="btn-save" onclick="saveHeroSettings()">Mentés & Frissít</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCT FORM MODAL -->
+<div id="form-modal" class="hidden">
+  <div class="fmodal-box">
+    <div class="fmodal-header">
+      <div class="fmodal-title" id="fmodal-title">Új termék</div>
+      <button class="modal-close" onclick="closeProductForm()">✕</button>
+    </div>
+    <div class="fmodal-body">
+      <input type="hidden" id="fp-id"/>
+      <div class="fg"><label>Termék neve *</label><input id="fp-name" type="text" placeholder="K3D Starter Kit"/></div>
+      <div class="form-row">
+        <div class="fg"><label>Ár (Ft) *</label><input id="fp-price" type="number" placeholder="12900"/></div>
+        <div class="fg"><label>Kategória / Badge</label><input id="fp-badge" type="text" placeholder="DIY Kit"/></div>
+      </div>
+      <div class="fg"><label>Leírás</label><textarea id="fp-desc" placeholder="Rövid termékleírás..."></textarea></div>
+      <div class="fg">
+        <label>Kép URL</label>
+        <input id="fp-imgurl" type="text" placeholder="https://..." oninput="previewImg(this.value)"/>
+        <div class="input-hint">Google Drive megosztott kép linkje vagy bármilyen publikus URL</div>
+      </div>
+      <div class="fg">
+        <label>Vagy kép feltöltése</label>
+        <input id="fp-imgfile" type="file" accept="image/*" onchange="filePreview(this)"/>
+      </div>
+      <img id="fp-imgpreview" class="img-preview" alt="Előnézet"/>
+      <div class="alert error" id="fp-err"></div>
+      <button class="btn-submit" onclick="saveProduct()">Mentés</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================
+// STATE
+// ============================
+const ADMIN_EMAIL = 'kris3dlab@gmail.com';
+const ADMIN_PASS  = 'Envagyokazadmin';
+let currentOrderProduct = null;
+let editingProductId = null;
+
+// ============================
+// STORAGE HELPERS
+// ============================
+function getProducts(){
+  try{ return JSON.parse(localStorage.getItem('k3d_products')||'[]'); }catch(e){return[];}
+}
+function saveProducts(arr){ localStorage.setItem('k3d_products',JSON.stringify(arr)); }
+function getOrders(){
+  try{ return JSON.parse(localStorage.getItem('k3d_orders')||'[]'); }catch(e){return[];}
+}
+function saveOrders(arr){ localStorage.setItem('k3d_orders',JSON.stringify(arr)); }
+function getSettings(){
+  try{ return JSON.parse(localStorage.getItem('k3d_settings')||'{}'); }catch(e){return{};}
+}
+function saveSettingsData(obj){ localStorage.setItem('k3d_settings',JSON.stringify(obj)); }
+
+// ============================
+// VIEW SWITCHERS
+// ============================
+function showSite(){
+  document.getElementById('view-site').classList.remove('hidden');
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-admin').classList.add('hidden');
+  renderProducts();
+}
+function showLogin(){
+  document.getElementById('view-site').classList.add('hidden');
+  document.getElementById('view-login').classList.remove('hidden');
+  document.getElementById('view-admin').classList.add('hidden');
+  document.getElementById('l-email').value='';
+  document.getElementById('l-pass').value='';
+  document.getElementById('login-err').style.display='none';
+}
+function showAdmin(){
+  document.getElementById('view-site').classList.add('hidden');
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-admin').classList.remove('hidden');
+  refreshAdmin();
+}
+
+// ============================
+// LOGIN
+// ============================
+function doLogin(){
+  const em = document.getElementById('l-email').value.trim();
+  const pw = document.getElementById('l-pass').value;
+  if(em===ADMIN_EMAIL && pw===ADMIN_PASS){
+    document.getElementById('login-err').style.display='none';
+    showAdmin();
+  } else {
+    document.getElementById('login-err').style.display='block';
+  }
+}
+function doLogout(){ showSite(); }
+
+// ============================
+// ADMIN TABS
+// ============================
+function adminTab(name, el){
+  document.querySelectorAll('.admin-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  el.classList.add('active');
+  const titles={dashboard:'Dashboard',orders:'Rendelések',products:'Termékek',settings:'Beállítások'};
+  document.getElementById('admin-page-title').textContent=titles[name]||name;
+  if(name==='products') renderAdminProducts();
+  if(name==='orders') renderAllOrders();
+  if(name==='settings') loadSettingsForm();
+}
+
+function refreshAdmin(){
+  renderDashboard();
+  renderAdminProducts();
+  renderAllOrders();
+  loadSettingsForm();
+}
+
+// ============================
+// DASHBOARD
+// ============================
+function renderDashboard(){
+  const orders = getOrders();
+  const products = getProducts();
+  document.getElementById('d-total').textContent = orders.length;
+  document.getElementById('d-new').textContent = orders.filter(o=>o.status==='new').length;
+  document.getElementById('d-products').textContent = products.length;
+  document.getElementById('d-done').textContent = orders.filter(o=>o.status==='done').length;
+
+  const tbody = document.getElementById('dash-orders-tbody');
+  const recent = [...orders].reverse().slice(0,5);
+  if(!recent.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:30px;">Nincs még rendelés</td></tr>';
+    return;
+  }
+  tbody.innerHTML = recent.map((o,i)=>`
+    <tr>
+      <td style="color:var(--dim)">#${String(o.id).padStart(3,'0')}</td>
+      <td>${esc(o.name)}</td>
+      <td>${esc(o.product)}</td>
+      <td>${esc(o.email)}</td>
+      <td style="color:var(--dim)">${o.date}</td>
+      <td><span class="badge ${o.status==='done'?'done':'new'}">${o.status==='done'?'Teljesített':'Új'}</span></td>
+    </tr>
+  `).join('');
+}
+
+// ============================
+// ORDERS
+// ============================
+function renderAllOrders(){
+  const orders = getOrders();
+  const tbody = document.getElementById('all-orders-tbody');
+  if(!orders.length){
+    tbody.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--dim);padding:30px;">Nincs még rendelés</td></tr>';
+    return;
+  }
+  tbody.innerHTML = [...orders].reverse().map(o=>`
+    <tr>
+      <td style="color:var(--dim)">#${String(o.id).padStart(3,'0')}</td>
+      <td>${esc(o.name)}</td>
+      <td>${esc(o.product)}</td>
+      <td>${esc(o.email)}</td>
+      <td>${esc(o.phone||'–')}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;">${esc(o.address)}</td>
+      <td style="color:var(--dim)">${esc(o.note||'–')}</td>
+      <td style="color:var(--dim)">${o.date}</td>
+      <td>
+        <select onchange="changeOrderStatus(${o.id},this.value)" style="padding:4px 8px;font-size:.75rem;width:auto;">
+          <option value="new" ${o.status==='new'?'selected':''}>Új</option>
+          <option value="done" ${o.status==='done'?'selected':''}>Teljesített</option>
+        </select>
+      </td>
+      <td><button class="del-btn" onclick="deleteOrder(${o.id})" title="Törlés">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function changeOrderStatus(id, status){
+  const orders = getOrders();
+  const o = orders.find(x=>x.id===id);
+  if(o){ o.status=status; saveOrders(orders); renderDashboard(); }
+}
+function deleteOrder(id){
+  if(!confirm('Biztosan törlöd ezt a rendelést?')) return;
+  saveOrders(getOrders().filter(o=>o.id!==id));
+  renderAllOrders(); renderDashboard();
+}
+function exportOrders(){
+  const orders = getOrders();
+  if(!orders.length){ alert('Nincs rendelés!'); return; }
+  const header = 'ID,Név,Termék,Email,Telefon,Cím,Megjegyzés,Dátum,Státusz';
+  const rows = orders.map(o=>[o.id,o.name,o.product,o.email,o.phone,o.address,o.note,o.date,o.status].map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(','));
+  const csv = [header,...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='k3d_orders.csv'; a.click();
+}
+
+// ============================
+// PRODUCTS – SITE
+// ============================
+function renderProducts(){
+  const grid = document.getElementById('products-grid');
+  const products = getProducts();
+  if(!products.length){
+    grid.innerHTML='<div class="no-products" style="color:var(--dim);padding:60px 0;letter-spacing:.1em;">Hamarosan elérhetők a termékek...</div>';
+    return;
+  }
+  grid.innerHTML = products.map(p=>`
+    <div class="product-card" onclick="openOrderModal(${p.id})">
+      ${p.img
+        ? `<img class="product-img" src="${esc(p.img)}" alt="${esc(p.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="product-img-placeholder" style="display:none"><svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></div>`
+        : `<div class="product-img-placeholder"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`
       }
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alert('Kérem adjon meg érvényes email-címet.');
-        return;
+      <div class="product-body">
+        <div class="product-badge">${esc(p.badge||'DIY Kit')}</div>
+        <div class="product-name">${esc(p.name)}</div>
+        <div class="product-desc">${esc(p.desc||'')}</div>
+        <div class="product-footer">
+          <div class="product-price">${Number(p.price).toLocaleString('hu-HU')}<span> Ft</span></div>
+          <button class="btn-buy" onclick="event.stopPropagation();openOrderModal(${p.id})">Megrendelem</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================
+// ORDER MODAL
+// ============================
+function openOrderModal(productId){
+  const p = getProducts().find(x=>x.id===productId);
+  if(!p) return;
+  currentOrderProduct = p;
+  const info = document.getElementById('modal-product-info');
+  info.innerHTML = `
+    ${p.img ? `<img src="${esc(p.img)}" style="width:60px;height:60px;object-fit:cover;" onerror="this.style.display='none'"/>` : ''}
+    <div>
+      <div class="pname">${esc(p.name)}</div>
+      <div class="pprice">${Number(p.price).toLocaleString('hu-HU')} Ft</div>
+    </div>
+  `;
+  document.getElementById('order-form-wrap').classList.remove('hidden');
+  document.getElementById('order-success').classList.add('hidden');
+  document.getElementById('order-err').style.display='none';
+  document.getElementById('order-err').textContent='';
+  ['o-last','o-first','o-email','o-phone','o-address','o-note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('order-submit-btn').disabled=false;
+  document.getElementById('order-submit-btn').textContent='Megrendelés elküldése →';
+  document.getElementById('order-modal').classList.remove('hidden');
+}
+function closeOrderModal(){
+  document.getElementById('order-modal').classList.add('hidden');
+  currentOrderProduct=null;
+}
+document.getElementById('order-modal').addEventListener('click',function(e){if(e.target===this)closeOrderModal();});
+
+async function submitOrder(){
+  const last = document.getElementById('o-last').value.trim();
+  const first = document.getElementById('o-first').value.trim();
+  const email = document.getElementById('o-email').value.trim();
+  const phone = document.getElementById('o-phone').value.trim();
+  const address = document.getElementById('o-address').value.trim();
+  const note = document.getElementById('o-note').value.trim();
+  const errEl = document.getElementById('order-err');
+
+  if(!last||!first||!email||!address){
+    errEl.textContent='Kérd töltsd ki a kötelező mezőket (csillaggal jelöltek)!';
+    errEl.style.display='block'; return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    errEl.textContent='Érvénytelen email-cím!';
+    errEl.style.display='block'; return;
+  }
+  errEl.style.display='none';
+
+  const btn = document.getElementById('order-submit-btn');
+  btn.disabled=true; btn.textContent='Küldés...';
+
+  const name = last+' '+first;
+  const orders = getOrders();
+  const newOrder = {
+    id: Date.now(),
+    name, email, phone, address, note,
+    product: currentOrderProduct.name,
+    productId: currentOrderProduct.id,
+    price: currentOrderProduct.price,
+    status:'new',
+    date: new Date().toLocaleDateString('hu-HU')
+  };
+  orders.push(newOrder);
+  saveOrders(orders);
+
+  // Send email via EmailJS
+  const s = getSettings();
+  if(s.ejsPubKey && s.ejsService && s.ejsTemplate){
+    try{
+      emailjs.init(s.ejsPubKey);
+      await emailjs.send(s.ejsService, s.ejsTemplate, {
+        from_name: name,
+        product: currentOrderProduct.name,
+        price: Number(currentOrderProduct.price).toLocaleString('hu-HU')+' Ft',
+        email, phone: phone||'–', address,
+        note: note||'–',
+        order_id: '#'+String(newOrder.id).slice(-6),
+        date: newOrder.date
+      });
+    } catch(err){ console.warn('EmailJS hiba:',err); }
+  }
+
+  document.getElementById('order-form-wrap').classList.add('hidden');
+  document.getElementById('order-success').classList.remove('hidden');
+}
+
+// ============================
+// PRODUCTS – ADMIN
+// ============================
+function renderAdminProducts(){
+  const grid = document.getElementById('admin-products-grid');
+  const products = getProducts();
+  if(!products.length){
+    grid.innerHTML='<div style="color:var(--dim);padding:40px 0;letter-spacing:.1em;">Még nincs termék. Adj hozzá egyet!</div>';
+    return;
+  }
+  grid.innerHTML = products.map(p=>`
+    <div class="pm-card">
+      ${p.img
+        ? `<img class="pm-img" src="${esc(p.img)}" alt="${esc(p.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/><div class="pm-img-ph" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>`
+        : `<div class="pm-img-ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></div>`
       }
+      <div class="pm-body">
+        <div class="pm-name">${esc(p.name)}</div>
+        <div class="pm-price">${Number(p.price).toLocaleString('hu-HU')} Ft</div>
+        <div class="pm-actions">
+          <button class="btn-edit" onclick="openProductForm(${p.id})">Szerkesztés</button>
+          <button class="btn-del" onclick="deleteProduct(${p.id})">Törlés</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
 
-      document.getElementById('orderForm').style.display = 'none';
-      const msg = document.getElementById('successMsg');
-      msg.style.display = 'block';
-      msg.scrollIntoView({ behavior: 'smooth' });
+function openProductForm(id){
+  editingProductId = id||null;
+  document.getElementById('fmodal-title').textContent = id ? 'Termék szerkesztése' : 'Új termék';
+  document.getElementById('fp-id').value = id||'';
+  document.getElementById('fp-err').style.display='none';
+  document.getElementById('fp-imgpreview').style.display='none';
+  if(id){
+    const p = getProducts().find(x=>x.id===id);
+    if(p){
+      document.getElementById('fp-name').value=p.name||'';
+      document.getElementById('fp-price').value=p.price||'';
+      document.getElementById('fp-badge').value=p.badge||'';
+      document.getElementById('fp-desc').value=p.desc||'';
+      document.getElementById('fp-imgurl').value=p.img||'';
+      document.getElementById('fp-imgfile').value='';
+      if(p.img){ document.getElementById('fp-imgpreview').src=p.img; document.getElementById('fp-imgpreview').style.display='block'; }
     }
-  </script>
+  } else {
+    ['fp-name','fp-price','fp-badge','fp-desc','fp-imgurl'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('fp-imgfile').value='';
+  }
+  document.getElementById('form-modal').classList.remove('hidden');
+}
+function closeProductForm(){ document.getElementById('form-modal').classList.add('hidden'); editingProductId=null; }
+document.getElementById('form-modal').addEventListener('click',function(e){if(e.target===this)closeProductForm();});
 
+function previewImg(url){
+  const prev = document.getElementById('fp-imgpreview');
+  if(url){ prev.src=url; prev.style.display='block'; }
+  else prev.style.display='none';
+}
+function filePreview(input){
+  if(!input.files||!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload=e=>{
+    document.getElementById('fp-imgurl').value='';
+    document.getElementById('fp-imgpreview').src=e.target.result;
+    document.getElementById('fp-imgpreview').style.display='block';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function saveProduct(){
+  const name = document.getElementById('fp-name').value.trim();
+  const price = document.getElementById('fp-price').value.trim();
+  const badge = document.getElementById('fp-badge').value.trim();
+  const desc = document.getElementById('fp-desc').value.trim();
+  const imgUrl = document.getElementById('fp-imgurl').value.trim();
+  const imgPrev = document.getElementById('fp-imgpreview');
+  const errEl = document.getElementById('fp-err');
+
+  if(!name||!price){ errEl.textContent='Név és ár kötelező!'; errEl.style.display='block'; return; }
+  errEl.style.display='none';
+
+  // image: url takes priority; if file was uploaded, use data URL from preview
+  let img = imgUrl;
+  if(!img && imgPrev.style.display!=='none' && imgPrev.src && imgPrev.src.startsWith('data:')){
+    img = imgPrev.src;
+  }
+
+  const products = getProducts();
+  if(editingProductId){
+    const idx = products.findIndex(x=>x.id===editingProductId);
+    if(idx>-1) products[idx]={...products[idx],name,price:Number(price),badge,desc,img};
+  } else {
+    products.push({id:Date.now(),name,price:Number(price),badge,desc,img,createdAt:new Date().toISOString()});
+  }
+  saveProducts(products);
+  closeProductForm();
+  renderAdminProducts();
+  renderDashboard();
+  renderProducts(); // refresh site too
+}
+
+function deleteProduct(id){
+  if(!confirm('Biztosan törlöd ezt a terméket?')) return;
+  saveProducts(getProducts().filter(p=>p.id!==id));
+  renderAdminProducts(); renderDashboard(); renderProducts();
+}
+
+// ============================
+// SETTINGS
+// ============================
+function loadSettingsForm(){
+  const s = getSettings();
+  document.getElementById('ejs-pubkey').value=s.ejsPubKey||'';
+  document.getElementById('ejs-service').value=s.ejsService||'';
+  document.getElementById('ejs-template').value=s.ejsTemplate||'';
+  document.getElementById('set-hero-sub').value=s.heroSub||'';
+  document.getElementById('set-hero-desc').value=s.heroDesc||'';
+}
+function saveSettings(){
+  const s = getSettings();
+  s.ejsPubKey=document.getElementById('ejs-pubkey').value.trim();
+  s.ejsService=document.getElementById('ejs-service').value.trim();
+  s.ejsTemplate=document.getElementById('ejs-template').value.trim();
+  saveSettingsData(s);
+  const al=document.getElementById('settings-alert');
+  al.className='alert success'; al.textContent='✓ Beállítások mentve!'; al.style.display='block';
+  setTimeout(()=>al.style.display='none',3000);
+}
+function saveHeroSettings(){
+  const s = getSettings();
+  s.heroSub=document.getElementById('set-hero-sub').value.trim();
+  s.heroDesc=document.getElementById('set-hero-desc').value.trim();
+  saveSettingsData(s);
+  // Apply to site
+  if(s.heroSub) document.querySelector('.hero-badge').innerHTML=`<span class="dot"></span> ${esc(s.heroSub)}`;
+  if(s.heroDesc) document.querySelector('.hero-desc').textContent=s.heroDesc;
+  const al=document.getElementById('settings-alert2');
+  al.className='alert success'; al.textContent='✓ Hero szöveg frissítve!'; al.style.display='block';
+  setTimeout(()=>al.style.display='none',3000);
+}
+
+// ============================
+// UTILS
+// ============================
+function esc(str){
+  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ============================
+// INIT
+// ============================
+window.addEventListener('DOMContentLoaded',()=>{
+  const s = getSettings();
+  if(s.heroSub && document.querySelector('.hero-badge'))
+    document.querySelector('.hero-badge').innerHTML=`<span class="dot"></span> ${esc(s.heroSub)}`;
+  if(s.heroDesc && document.querySelector('.hero-desc'))
+    document.querySelector('.hero-desc').textContent=s.heroDesc;
+  renderProducts();
+});
+</script>
 </body>
 </html>
